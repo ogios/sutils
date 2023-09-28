@@ -1,4 +1,4 @@
-package main
+package sutils
 
 import (
 	"bufio"
@@ -48,20 +48,30 @@ func (si *SBodyIN) Next() (int, error) {
 	return total, nil
 }
 
-func (si *SBodyIN) GetSec(next bool) ([]byte, error) {
-	length, err := si.Next()
-	if err != nil {
-		return nil, err
+func (si *SBodyIN) GetSec() ([]byte, error) {
+	if si.readed < si.CurrSecLength {
+		bs := make([]byte, si.CurrSecLength-si.readed)
+		readed, err := si.raw.Read(bs)
+		if err != nil {
+			return nil, err
+		}
+		si.readed += readed
+		return bs, nil
+	} else {
+		length, err := si.Next()
+		if err != nil {
+			return nil, err
+		}
+		temp := make([]byte, length)
+		readlength, err := si.raw.Read(temp)
+		if err != nil {
+			return nil, err
+		}
+		if readlength != length {
+			fmt.Printf("Wrong length: read:%d - next:%d\n", readlength, length)
+		}
+		return temp, nil
 	}
-	temp := make([]byte, length)
-	readlength, err := si.raw.Read(temp)
-	if err != nil {
-		return nil, err
-	}
-	if readlength != length {
-		fmt.Printf("Wrong length: read:%d - next:%d\n", readlength, length)
-	}
-	return temp, nil
 }
 
 func (si *SBodyIN) Read(buf []byte) (int, error) {
