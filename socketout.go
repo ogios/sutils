@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"io"
 	"sync"
+
+	"golang.org/x/exp/slog"
 )
 
 var OUT_TYPE_BYTES uint8 = 1
@@ -23,8 +25,8 @@ type SBodyOUT struct {
 func NewSBodyOUT() SBodyOUT {
 	return SBodyOUT{
 		Cond:  *sync.NewCond(&sync.Mutex{}),
-		Raw:   make([]any, SLICE_CAPACITY),
-		Types: make([]uint8, SLICE_CAPACITY),
+		Raw:   make([]any, 0),
+		Types: make([]uint8, 0),
 		p:     0,
 		pool: sync.Pool{
 			New: func() any {
@@ -94,14 +96,23 @@ func (so *SBodyOUT) WriteTo(output io.Writer) (write_err error) {
 	defer so.Cond.L.Unlock()
 	writer := bufio.NewWriter(output)
 	for index, input := range so.Raw {
+		slog.Debug(fmt.Sprintln("index", index))
+		slog.Debug(fmt.Sprintln("input", input))
+		if input == nil {
+			continue
+		}
 		if index%2 == 0 {
+			slog.Debug("Writing length bytes")
 			writer.Write(input.([]byte))
 		} else {
-			t := so.Types[(index+1)/2]
+			t := so.Types[(index-1)/2]
+			slog.Debug(fmt.Sprintln("Type:", t))
 			switch t {
 			case OUT_TYPE_BYTES:
+				slog.Debug("Writing raw bytes")
 				writer.Write(input.([]byte))
 			case OUT_TYPE_READER:
+				slog.Debug("Writing reader bytes")
 				reader := bufio.NewReader(input.(io.Reader))
 				temp := so.pool.Get().(*[]byte)
 				for {
@@ -112,6 +123,8 @@ func (so *SBodyOUT) WriteTo(output io.Writer) (write_err error) {
 					writer.Write((*temp)[:read])
 				}
 				so.pool.Put(temp)
+			default:
+				slog.Error(fmt.Sprintln("Unknow type:", t))
 			}
 		}
 	}

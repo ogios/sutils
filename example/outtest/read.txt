@@ -1,0 +1,101 @@
+    }
+    buf := make([]byte,1024)
+    for {
+        len, _ := file.Read(buf)
+        if len == 0 {
+            break
+        }
+        fmt.Println(string(buf))
+    }
+
+    buf1 := make([]byte,1024)
+    offset := 0
+    for {
+        len1, _ := file.ReadAt(buf1, int64(offset))
+        offset = offset + len1
+        if len1 == 0 {
+            break
+        }
+        fmt.Println(string(buf1))
+    }
+    file.Close()
+}
+这是一个简单的打开文件读取数据的例子。
+
+file.Read()方法是直接将文件内容读取到指定大小的 byte 数组中，由源码可知如果 byte 数组大于 1G，那么默认一次最大可以读取 1G 大小的数据。
+
+file.ReadAt()方法可以手动指定每次读取位置的偏移量。而不是默认设置。
+
+我们再看 OpenFile 方法：
+
+package main
+
+import (
+    "fmt"
+    "os"
+)
+func main() {
+    //以读写方式打开文件，如果不存在，则创建
+    openFile, e := os.OpenFile("c:/1.txt", os.O_RDWR|os.O_CREATE, 777)
+    if e != nil {
+        fmt.Println(e)
+    }
+    buf := make([]byte,1024)
+    for {
+        len, _ := openFile.Read(buf)
+        if len == 0 {
+            break
+        }
+        fmt.Println(string(buf))
+    }
+    openFile.Close()
+}
+OpenFile 函数的第二个参数是文件的打开模式：
+
+const (
+ // Exactly one of O_RDONLY, O_WRONLY, or O_RDWR must be specified.
+ O_RDONLY int = syscall.O_RDONLY // 只读模式
+ O_WRONLY int = syscall.O_WRONLY //只写模式
+ O_RDWR   int = syscall.O_RDWR   // 读写混合模式
+ // The remaining values may be or'ed in to control behavior.
+ O_APPEND int = syscall.O_APPEND // 写模式的时候将数据附加到文件末尾
+ O_CREATE int = syscall.O_CREAT  // 文件如果不存在就新建
+ O_EXCL   int = syscall.O_EXCL   // 和 O_CREATE模式一起使用, 文件必须不存在
+ O_SYNC   int = syscall.O_SYNC   //打开文件用于同步 I/O.
+ O_TRUNC  int = syscall.O_TRUNC  // 打开文件时清空文件
+)
+前面三种是文件打开模式，后面五种是打开文件之后相应的操作模式；前面三个你只能选择一个，后面可以多选，中间用"|"隔开。
+
+OpenFile 函数的第三个参数是文件的权限，跟 linux 文件权限一致：
+
+r ——> 004
+w ——> 002
+x ——> 001
+通常情况如果你只是读文件操作，权限是可以被忽略的，第三个参数可以传 0。而在写文件的时候，就需要传 666，以确保你有足够的权限执行写入。
+
+2. 写入文件
+上面我们用到了 OpenFile，可以指定文件打开的方式，如果使用了只写或者读写模式，表示可以写文件。另外 control 模式选择的不同对你写文件的影响也是大有不同的,比如：
+
+os.O_RDWR|os.O_CREATE ： 文件不存在会新建文件，文件如果存在，会从文件开始处用新内容覆盖原始内容，(如果新内容只有 5 个字符，原始内容有 10 个，那么只有开始 5 个是新内容，后面 5 个还是以前的内容)
+
+os.O_RDWR|os.O_APPEND ： 本次写入的值会在文件末尾进行 append 操作，不会覆盖以前的内容。
+
+os.O_RDWR|os.O_TRUNC ： 打开文件的时候先清空文件。
+
+package main
+
+import (
+    "fmt"
+    "os"
+)
+
+
+func main() {
+    openFile, e := os.OpenFile("c:/1.txt", os.O_RDWR|os.O_CREATE|os.O_TRUNC, 777)
+    if e != nil {
+        fmt.Println(e)
+    }
+    str := "overwrite to file"
+    openFile.WriteString(str)
+    openFile.Close()
+}
