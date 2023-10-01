@@ -5,14 +5,14 @@ import (
 	"fmt"
 	"net"
 
-	st "github.com/ogios/sutils"
+	"github.com/ogios/sutils"
 )
 
-func main() {
+func test1() {
 	ln, _ := net.Listen("tcp", ":15002")
 	conn, _ := ln.Accept()
 
-	si := st.NewSBodyIn(bufio.NewReader(conn))
+	si := sutils.NewSBodyIn(bufio.NewReader(conn))
 
 	// next
 	length, err := si.Next()
@@ -39,4 +39,26 @@ func main() {
 	final = append(final, bs...)
 	final = append(final, app...)
 	fmt.Println(string(final))
+}
+
+func test2() {
+	ln, _ := net.Listen("tcp", ":15002")
+	conn, _ := ln.Accept()
+
+	si := sutils.NewSBodyIn(bufio.NewReader(conn))
+	app, err := si.GetSec()
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println(app)
+
+	app, err = si.GetSec()
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println(app)
+}
+
+func main() {
+	test2()
 }

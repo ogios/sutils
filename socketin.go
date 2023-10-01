@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"math"
+
+	"golang.org/x/exp/slog"
 )
 
 type SBodyIN struct {
@@ -29,8 +31,10 @@ func (si *SBodyIN) Next() (int, error) {
 	if si.CurrSecLength < si.readed {
 		return 0, errors.New("please read all of current section")
 	}
-	readlen, err := si.raw.ReadBytes(0)
-	if err != nil {
+	readlen := make([]byte, ContentLengthMax)
+	readed, err := si.raw.Read(readlen)
+	slog.Error(fmt.Sprintln("Length:", readlen))
+	if err != nil || readed != int(ContentLengthMax) {
 		return 0, err
 	}
 	if len(readlen) < 1 {
@@ -39,8 +43,7 @@ func (si *SBodyIN) Next() (int, error) {
 	rawlen := readlen[:len(readlen)-1]
 	total := 0
 	for index, b := range rawlen {
-		pow := float64(len(rawlen) - 1 - index)
-		feat := int(math.Pow(255, pow))
+		feat := int(math.Pow(255, float64(index)))
 		total += int(b) * feat
 	}
 	si.CurrSecLength = total
@@ -51,6 +54,7 @@ func (si *SBodyIN) Next() (int, error) {
 func (si *SBodyIN) GetSec() ([]byte, error) {
 	if si.readed < si.CurrSecLength {
 		bs := make([]byte, si.CurrSecLength-si.readed)
+		slog.Error(fmt.Sprintln("Get old:", len(bs)))
 		readed, err := si.raw.Read(bs)
 		if err != nil {
 			return nil, err
@@ -58,17 +62,18 @@ func (si *SBodyIN) GetSec() ([]byte, error) {
 		si.readed += readed
 		return bs, nil
 	} else {
+		slog.Error("Get new")
 		length, err := si.Next()
 		if err != nil {
 			return nil, err
 		}
 		temp := make([]byte, length)
-		readlength, err := si.raw.Read(temp)
+		readlength, err := si.Read(temp)
 		if err != nil {
 			return nil, err
 		}
 		if readlength != length {
-			fmt.Printf("Wrong length: read:%d - next:%d\n", readlength, length)
+			slog.Error(fmt.Sprintf("Wrong length: read:%d - next:%d\n", readlength, length))
 		}
 		return temp, nil
 	}
@@ -79,13 +84,19 @@ func (si *SBodyIN) Read(buf []byte) (int, error) {
 		return 0, errors.New("no more bytes for current section")
 	}
 	if len(buf) <= si.CurrSecLength-si.readed {
-		return si.raw.Read(buf)
+		i, err := si.raw.Read(buf)
+		if err != nil {
+			return 0, err
+		}
+		si.readed += i
+		return i, err
 	} else {
 		temp := make([]byte, si.CurrSecLength-si.readed)
 		length, err := si.raw.Read(temp)
 		if err != nil {
 			return 0, err
 		}
+		si.readed += length
 		copy(buf[:length], temp)
 		return length, nil
 	}
