@@ -33,7 +33,7 @@ func (si *SBodyIN) Next() (int, error) {
 	}
 	readlen := make([]byte, ContentLengthMax)
 	readed, err := si.raw.Read(readlen)
-	slog.Error(fmt.Sprintln("Length:", readlen))
+	slog.Debug(fmt.Sprintln("Length:", readlen))
 	if err != nil || readed != int(ContentLengthMax) {
 		return 0, err
 	}
@@ -54,7 +54,7 @@ func (si *SBodyIN) Next() (int, error) {
 func (si *SBodyIN) GetSec() ([]byte, error) {
 	if si.readed < si.CurrSecLength {
 		bs := make([]byte, si.CurrSecLength-si.readed)
-		slog.Error(fmt.Sprintln("Get old:", len(bs)))
+		slog.Debug(fmt.Sprintln("Get old:", len(bs)))
 		readed, err := si.raw.Read(bs)
 		if err != nil {
 			return nil, err
@@ -62,7 +62,7 @@ func (si *SBodyIN) GetSec() ([]byte, error) {
 		si.readed += readed
 		return bs, nil
 	} else {
-		slog.Error("Get new")
+		slog.Debug("Get new")
 		length, err := si.Next()
 		if err != nil {
 			return nil, err
