@@ -50,36 +50,49 @@ func (so *SBodyOUT) add(raw any, t uint8, lenb []byte) {
 	so.p += 1
 }
 
-func getlength(length int) ([]byte, error) {
-	content_length := make([]byte, ContentLengthMax)
+func getlength(length int) []byte {
+	// content_length := make([]byte, ContentLengthMax)
+	var content_length []byte
 	var index uint8 = 0
-	for length >= 255 {
-		if index >= ContentLengthMax {
-			return nil, fmt.Errorf("message length too long, max size is 255**%d", ContentLengthMax)
+
+	var main func(last int)
+	main = func(last int) {
+		if last >= 255 {
+			current := byte(last % 255)
+			index++
+			main(last / 255)
+			content_length[index] = current
+		} else {
+			count := index + 1
+			content_length = make([]byte, count+1)
+			content_length[index] = byte(last)
+			content_length[index+1] = byte(255)
 		}
-		content_length[index] = byte(length % 255)
-		length /= 255
-		index++
+		index--
 	}
-	content_length[index] = byte(length)
-	return content_length, nil
+	main(length)
+
+	// for length >= 255 {
+	// 	if index >= ContentLengthMax {
+	// 		return nil, fmt.Errorf("message length too long, max size is 255**%d", ContentLengthMax)
+	// 	}
+	// 	content_length[index] = byte(length % 255)
+	// 	length /= 255
+	// 	index++
+	// }
+	// content_length[index] = byte(length)
+	return content_length
 }
 
 func (so *SBodyOUT) AddBytes(raw []byte) error {
 	length := len(raw)
-	content_length, err := getlength(length)
-	if err != nil {
-		return err
-	}
+	content_length := getlength(length)
 	so.add(raw, OUT_TYPE_BYTES, content_length)
 	return nil
 }
 
 func (so *SBodyOUT) AddReader(raw io.Reader, length int) error {
-	content_length, err := getlength(length)
-	if err != nil {
-		return err
-	}
+	content_length := getlength(length)
 	so.add(raw, OUT_TYPE_READER, content_length)
 	return nil
 }

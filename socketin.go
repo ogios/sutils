@@ -31,24 +31,51 @@ func (si *SBodyIN) Next() (int, error) {
 	if si.CurrSecLength < si.readed {
 		return 0, errors.New("please read all of current section")
 	}
-	readlen := make([]byte, ContentLengthMax)
-	readed, err := si.raw.Read(readlen)
-	slog.Debug(fmt.Sprintln("Length:", readlen))
-	if err != nil || readed != int(ContentLengthMax) {
+	// readlen := make([]byte, ContentLengthMax)
+	index := -1
+	t := 0
+
+	var main func() error
+	main = func() error {
+		current, err := si.raw.ReadByte()
+		if err != nil {
+			return err
+		}
+		if current != 255 {
+			index++
+			err := main()
+			if err != nil {
+				return err
+			}
+			feat := int(math.Pow(255, float64(index)))
+			t += int(current) * feat
+			index--
+		}
+		return nil
+	}
+	err := main()
+	if err != nil {
 		return 0, err
 	}
-	if len(readlen) < 1 {
-		return 0, errors.New("no length provided")
-	}
-	rawlen := readlen[:len(readlen)-1]
-	total := 0
-	for index, b := range rawlen {
-		feat := int(math.Pow(255, float64(index)))
-		total += int(b) * feat
-	}
-	si.CurrSecLength = total
-	si.readed = 0
-	return total, nil
+	return t, nil
+
+	// readed, err := si.raw.Read(readlen)
+	// slog.Debug(fmt.Sprintln("Length:", readlen))
+	// if err != nil || readed != int(ContentLengthMax) {
+	// 	return 0, err
+	// }
+	// if len(readlen) < 1 {
+	// 	return 0, errors.New("no length provided")
+	// }
+	// rawlen := readlen[:len(readlen)-1]
+	// total := 0
+	// for index, b := range rawlen {
+	// 	feat := int(math.Pow(255, float64(index)))
+	// 	total += int(b) * feat
+	// }
+	// si.CurrSecLength = total
+	// si.readed = 0
+	// return total, nil
 }
 
 func (si *SBodyIN) GetSec() ([]byte, error) {

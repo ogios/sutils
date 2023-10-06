@@ -1,12 +1,16 @@
 package main
 
-func test([]byte) {
+import "fmt"
+
+func a() (text any) {
+	defer func() {
+		fmt.Println(text)
+		text = 2
+	}()
+	return 1
 }
 
 func main() {
-	a := new([8]byte)
-	b := make([]any, 1)
-	b[0] = a
-
-	test(b[0].([8]byte))
+	b := a()
+	fmt.Println(b)
 }
