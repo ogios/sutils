@@ -40,14 +40,14 @@ func NewSBodyOUT() *SBodyOUT {
 func (so *SBodyOUT) add(raw any, t uint8, lenb []byte) {
 	so.Cond.L.Lock()
 	defer so.Cond.L.Unlock()
-	if so.p+1 >= SLICE_CAPACITY {
-		so.Raw = append(make([]any, len(so.Raw)+int(SLICE_CAPACITY)), so.Raw...)
-		so.Types = append(make([]uint8, len(so.Types)+int(SLICE_CAPACITY)), so.Types...)
-		so.p = 0
-	}
+	// if so.p+1 >= SLICE_CAPACITY {
+	// 	so.Raw = append(make([]any, len(so.Raw)+int(SLICE_CAPACITY)), so.Raw...)
+	// 	so.Types = append(make([]uint8, len(so.Types)+int(SLICE_CAPACITY)), so.Types...)
+	// 	so.p = 0
+	// }
 	so.Raw = append(so.Raw, lenb, raw)
 	so.Types = append(so.Types, t)
-	so.p += 1
+	// so.p += 1
 }
 
 func getlength(length int) []byte {

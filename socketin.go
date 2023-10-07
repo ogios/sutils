@@ -13,17 +13,13 @@ type SBodyIN struct {
 	raw           *bufio.Reader
 	readed        int
 	CurrSecLength int
-	BufferSize    int
-	buffer        [16]byte
 }
 
 func NewSBodyIn(reader *bufio.Reader) *SBodyIN {
 	return &SBodyIN{
 		raw:           reader,
 		readed:        0,
-		BufferSize:    1024,
 		CurrSecLength: 0,
-		buffer:        [16]byte{},
 	}
 }
 
@@ -57,6 +53,8 @@ func (si *SBodyIN) Next() (int, error) {
 	if err != nil {
 		return 0, err
 	}
+	si.CurrSecLength = t
+	si.readed = 0
 	return t, nil
 
 	// readed, err := si.raw.Read(readlen)
