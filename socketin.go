@@ -17,8 +17,8 @@ type SBodyIN struct {
 	buffer        [16]byte
 }
 
-func NewSBodyIn(reader *bufio.Reader) SBodyIN {
-	return SBodyIN{
+func NewSBodyIn(reader *bufio.Reader) *SBodyIN {
+	return &SBodyIN{
 		raw:           reader,
 		readed:        0,
 		BufferSize:    1024,

@@ -22,8 +22,8 @@ type SBodyOUT struct {
 	p     uint8
 }
 
-func NewSBodyOUT() SBodyOUT {
-	return SBodyOUT{
+func NewSBodyOUT() *SBodyOUT {
+	return &SBodyOUT{
 		Cond:  *sync.NewCond(&sync.Mutex{}),
 		Raw:   make([]any, 0),
 		Types: make([]uint8, 0),
