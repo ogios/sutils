@@ -1,4 +1,2 @@
-github.com/ogios/sutils v0.1.0 h1:eIUjeG7tkf3lW0WCccEalpJfQ8GRSxC9XnG5pJxK+g0=
-github.com/ogios/sutils v0.1.0/go.mod h1:d5pmQ643awKulNf4roCcFQm2VJnYoTNSXWkB8fIlcGI=
 golang.org/x/exp v0.0.0-20230905200255-921286631fa9 h1:GoHiUyI/Tp2nVkLI2mCxVkOjsbSXD66ic0XW0js0R9g=
 golang.org/x/exp v0.0.0-20230905200255-921286631fa9/go.mod h1:S2oDrQGGwySpoQPVqRShND87VCbxmc6bL1Yd2oYrm6k=
